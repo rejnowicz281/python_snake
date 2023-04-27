@@ -1,5 +1,3 @@
-import random
-
 import pygame
 
 # Initialize pygame
@@ -9,6 +7,8 @@ pygame.init()
 SCREEN_WIDTH = 700
 SCREEN_HEIGHT = 700
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+
+CELL_SIZE = 35
 
 # Score
 
@@ -52,24 +52,26 @@ pygame.display.set_caption("Snake")
 icon = pygame.image.load('icon.png')
 pygame.display.set_icon(icon)
 
-# Player
-player = {
-    "x": random.randint(100, 600),
-    "y": random.randint(100, 600),
-    "size_x": 30,
-    "size_y": 30,
-    "speed": 0.5,
-    "direction": None
+# Snake
+snake = {
+    "body": [(5, 5), (6, 5), (7, 5)],
+    "direction": (0, 0)
 }
 
 
-def draw_player(x, y):
-    pygame.draw.rect(screen, (0, 255, 0), (x, y, player["size_x"], player["size_y"]))
+def draw_snake():
+    for cell in snake["body"]:
+        x = cell[0] * CELL_SIZE
+        y = cell[1] * CELL_SIZE
+        rect = pygame.Rect(x, y, CELL_SIZE, CELL_SIZE)
+        pygame.draw.rect(screen, (0, 255, 0), rect)
 
 
 # Game Loop
 running = True
 while running:
+    # Ensure 15 FPS
+    pygame.time.Clock().tick(15)
 
     # Background
     screen.fill((0, 0, 0))
@@ -80,38 +82,24 @@ while running:
 
         # Arrow movement
         if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_LEFT:
-                player["direction"] = "left"
+            if event.key == pygame.K_LEFT and snake["direction"] != (1, 0):
+                snake["direction"] = (-1, 0)
                 print("direction left")
-            elif event.key == pygame.K_RIGHT:
-                player["direction"] = "right"
+            elif event.key == pygame.K_RIGHT and snake["direction"] != (-1, 0):
+                snake["direction"] = (1, 0)
                 print("direction right")
-            elif event.key == pygame.K_UP:
-                player["direction"] = "up"
+            elif event.key == pygame.K_UP and snake["direction"] != (0, 1):
+                snake["direction"] = (0, -1)
                 print("direction up")
-            elif event.key == pygame.K_DOWN:
-                player["direction"] = "down"
+            elif event.key == pygame.K_DOWN and snake["direction"] != (0, -1):
+                snake["direction"] = (0, 1)
                 print("direction down")
 
-    if player["direction"] == "left":
-        player["x"] -= player["speed"]
-    elif player["direction"] == "right":
-        player["x"] += player["speed"]
-    elif player["direction"] == "up":
-        player["y"] -= player["speed"]
-    elif player["direction"] == "down":
-        player["y"] += player["speed"]
+    snake_head = (snake["body"][0][0] + snake["direction"][0], snake["body"][0][1] + snake["direction"][1])
+    snake["body"].insert(0, snake_head)
+    snake["body"].pop()
 
-    # Game Over
-    if player["x"] < 0 or player["x"] > (SCREEN_WIDTH - player["size_x"]) or player["y"] < 0 or \
-            player["y"] > (SCREEN_HEIGHT - player["size_y"]):
-        player["speed"] = 0
-        # Save high score
-        with open("high_score.txt", "w") as file:
-            file.write(str(high_score_value))
-        show_game_over()
-
-    draw_player(player["x"], player["y"])
+    draw_snake()
     show_score(score_x, score_y)
     show_high_score(high_score_x, high_score_y)
     pygame.display.update()
