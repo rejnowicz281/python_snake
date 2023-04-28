@@ -4,11 +4,12 @@ import pygame
 pygame.init()
 
 # Create screen
-SCREEN_WIDTH = 700
-SCREEN_HEIGHT = 700
-screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-
 CELL_SIZE = 35
+ROWS = 20
+COLS = 20
+SCREEN_WIDTH = CELL_SIZE * COLS
+SCREEN_HEIGHT = CELL_SIZE * ROWS
+screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 
 # Score
 
