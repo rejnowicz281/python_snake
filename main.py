@@ -41,6 +41,13 @@ def show_high_score(x, y):
     screen.blit(high_score, (x, y))
 
 
+def save_high_score():
+    global high_score_value
+    high_score_value = score_value if score_value > high_score_value else high_score_value
+    with open("high_score.txt", "w") as txt_file:
+        txt_file.write(str(high_score_value))
+
+
 # Game Over
 game_over_font = pygame.font.Font('freesansbold.ttf', 100)
 
@@ -77,7 +84,7 @@ def random_fruit_pos():
     if (x, y) not in snake["body"]:
         return x, y
     else:
-        random_fruit_pos()
+        return random_fruit_pos()
 
 
 fruit = {
@@ -94,6 +101,7 @@ def draw_fruit():
 
 # Game Loop
 running = True
+game_over = False
 while running:
     # Ensure 15 FPS
     pygame.time.Clock().tick(15)
@@ -106,9 +114,7 @@ while running:
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
-            high_score_value = score_value if score_value > high_score_value else high_score_value
-            with open("high_score.txt", "w") as file:
-                file.write(str(high_score_value))
+            save_high_score()
             running = False
 
         # Arrow movement
@@ -130,18 +136,33 @@ while running:
                 print("direction down")
                 changed_direction = True
 
-    snake_head = (snake["body"][0][0] + snake["direction"][0], snake["body"][0][1] + snake["direction"][1])
-    snake["body"].insert(0, snake_head)
+    if not game_over:
+        # Simulate movement of snake
+        snake_head = (snake["body"][0][0] + snake["direction"][0], snake["body"][0][1] + snake["direction"][1])
+        snake["body"].insert(0, snake_head)
 
-    if snake_head == fruit["pos"]:
-        score_value += 1
-        high_score_value = score_value if score_value > high_score_value else high_score_value
-        fruit["pos"] = random_fruit_pos()
-    else:
-        snake["body"].pop()
+        # Fruit eating and tail popping
+        if snake_head == fruit["pos"]:
+            score_value += 1
+            high_score_value = score_value if score_value > high_score_value else high_score_value
+            fruit["pos"] = random_fruit_pos()
+        else:
+            snake["body"].pop()
+
+        # Game Over
+        snake_body_no_head = snake["body"].copy()
+        snake_body_no_head.remove(snake_head)
+        if snake_head in snake_body_no_head or snake_head[0] <= 0 or snake_head[0] >= (COLS - 1) or snake_head[1] <= 0 or \
+                snake_head[1] >= (ROWS - 1):
+            game_over = True
+            save_high_score()
 
     draw_snake()
     draw_fruit()
+
+    if game_over:
+        show_game_over()
+
     show_score(score_x, score_y)
     show_high_score(high_score_x, high_score_y)
     pygame.display.update()
