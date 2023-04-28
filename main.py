@@ -1,3 +1,5 @@
+import random
+
 import pygame
 
 # Initialize pygame
@@ -55,8 +57,8 @@ pygame.display.set_icon(icon)
 
 # Snake
 snake = {
-    "body": [(5, 5), (6, 5), (7, 5)],
-    "direction": (0, 0)
+    "body": [(8, 5), (9, 5), (10, 5), (11, 5)],
+    "direction": (-1, 0)
 }
 
 
@@ -66,6 +68,28 @@ def draw_snake():
         y = cell[1] * CELL_SIZE
         rect = pygame.Rect(x, y, CELL_SIZE, CELL_SIZE)
         pygame.draw.rect(screen, (0, 255, 0), rect)
+
+
+# Fruit
+def random_fruit_pos():
+    x = (random.randint(0, COLS - 1))
+    y = (random.randint(0, ROWS - 1))
+    if (x, y) not in snake["body"]:
+        return x, y
+    else:
+        random_fruit_pos()
+
+
+fruit = {
+    "pos": random_fruit_pos()
+}
+
+
+def draw_fruit():
+    x = fruit["pos"][0] * CELL_SIZE
+    y = fruit["pos"][1] * CELL_SIZE
+    rect = pygame.Rect(x, y, CELL_SIZE, CELL_SIZE)
+    pygame.draw.rect(screen, (255, 0, 0), rect)
 
 
 # Game Loop
@@ -79,6 +103,9 @@ while running:
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
+            high_score_value = score_value if score_value > high_score_value else high_score_value
+            with open("high_score.txt", "w") as file:
+                file.write(str(high_score_value))
             running = False
 
         # Arrow movement
@@ -98,9 +125,16 @@ while running:
 
     snake_head = (snake["body"][0][0] + snake["direction"][0], snake["body"][0][1] + snake["direction"][1])
     snake["body"].insert(0, snake_head)
-    snake["body"].pop()
+
+    if snake_head == fruit["pos"]:
+        score_value += 1
+        high_score_value = score_value if score_value > high_score_value else high_score_value
+        fruit["pos"] = random_fruit_pos()
+    else:
+        snake["body"].pop()
 
     draw_snake()
+    draw_fruit()
     show_score(score_x, score_y)
     show_high_score(high_score_x, high_score_y)
     pygame.display.update()
