@@ -93,12 +93,14 @@ class Game:
         self.snake.add_block()
 
         # Fruit eating and tail popping
-        if snake_head == game.fruit.pos:
-            game.score += 1
-            game.save_high_score()
-            game.fruit.random_pos()
+        if snake_head == self.fruit.pos:
+            self.score += 1
+            self.save_high_score()
+            self.fruit.random_pos()
+            while self.fruit.pos in self.snake.body:
+                self.fruit.random_pos()
         else:
-            game.snake.body.pop()
+            self.snake.body.pop()
 
     def update_state(self):
         snake_head = self.snake.head()
