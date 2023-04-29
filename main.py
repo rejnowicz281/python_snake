@@ -1,9 +1,15 @@
 import random
 
 import pygame
+from pygame.math import Vector2
 
 # Initialize pygame
 pygame.init()
+
+# Title and Icon
+pygame.display.set_caption("Snake")
+icon = pygame.image.load('icon.png')
+pygame.display.set_icon(icon)
 
 # Create screen
 CELL_SIZE = 35
@@ -13,95 +19,100 @@ SCREEN_WIDTH = CELL_SIZE * COLS
 SCREEN_HEIGHT = CELL_SIZE * ROWS
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 
-# Score
 
-score_value = 0
-score_font = pygame.font.Font('freesansbold.ttf', 32)
-score_x = 10
-score_y = 50
+class Snake:
+    def __init__(self):
+        self.body = [Vector2(15, 5), Vector2(16, 5), Vector2(17, 5)]
+        self.direction = Vector2(-1, 0)
 
+    def draw(self):
+        for cell in self.body:
+            x = cell.x * CELL_SIZE
+            y = cell.y * CELL_SIZE
+            rect = pygame.Rect(x, y, CELL_SIZE, CELL_SIZE)
+            pygame.draw.rect(screen, (0, 255, 0), rect)
 
-def show_score(x, y):
-    score = score_font.render("Score: " + str(score_value), True, (255, 255, 255))
-    screen.blit(score, (x, y))
+    def head(self):
+        return self.body[0] + self.direction
 
-
-# High Score
-try:
-    with open("high_score.txt", "r") as file:
-        high_score_value = int(file.read())
-except FileNotFoundError:
-    high_score_value = 0
-high_score_x = 10
-high_score_y = 10
+    def add_block(self):
+        self.body.insert(0, Vector2(self.head()))
 
 
-def show_high_score(x, y):
-    high_score = score_font.render("High score: " + str(high_score_value), True, (255, 255, 255))
-    screen.blit(high_score, (x, y))
+class Fruit:
+    def __init__(self):
+        self.pos = Vector2(0, 0)
+        self.random_pos()
 
+    def random_pos(self):
+        x = (random.randint(0, COLS - 1))
+        y = (random.randint(0, ROWS - 1))
+        self.pos = Vector2(x, y)
 
-def save_high_score():
-    global high_score_value
-    high_score_value = score_value if score_value > high_score_value else high_score_value
-    with open("high_score.txt", "w") as txt_file:
-        txt_file.write(str(high_score_value))
-
-
-# Game Over
-game_over_font = pygame.font.Font('freesansbold.ttf', 100)
-
-
-def show_game_over():
-    over_text = game_over_font.render("GAME OVER", True, (255, 255, 255))
-    screen.blit(over_text, (50, 310))
-
-
-# Title and Icon
-pygame.display.set_caption("Snake")
-icon = pygame.image.load('icon.png')
-pygame.display.set_icon(icon)
-
-# Snake
-snake = {
-    "body": [(8, 5), (9, 5), (10, 5), (11, 5)],
-    "direction": (-1, 0)
-}
-
-
-def draw_snake():
-    for cell in snake["body"]:
-        x = cell[0] * CELL_SIZE
-        y = cell[1] * CELL_SIZE
+    def draw(self):
+        x = self.pos.x * CELL_SIZE
+        y = self.pos.y * CELL_SIZE
         rect = pygame.Rect(x, y, CELL_SIZE, CELL_SIZE)
-        pygame.draw.rect(screen, (0, 255, 0), rect)
+        pygame.draw.rect(screen, (255, 0, 0), rect)
 
 
-# Fruit
-def random_fruit_pos():
-    x = (random.randint(0, COLS - 1))
-    y = (random.randint(0, ROWS - 1))
-    if (x, y) not in snake["body"]:
-        return x, y
-    else:
-        return random_fruit_pos()
+class Game:
+    def __init__(self):
+        self.state = "running"
+        self.snake = Snake()
+        self.fruit = Fruit()
+        self.score = 0
+        self.high_score = 0
+        self.load_high_score()
+
+    def load_high_score(self):
+        with open("high_score.txt", "r") as high_score_file:
+            self.high_score = int(high_score_file.read())
+
+    def draw_text(self, x, y, text, font=pygame.font.Font('freesansbold.ttf', 32)):
+        content = font.render(text, True, (255, 255, 255))
+        screen.blit(content, (x, y))
+
+    def show_score(self):
+        self.draw_text(10, 50, f"Score: {str(self.score)}")
+
+    def show_high_score(self):
+        self.draw_text(10, 10, f"High Score: {str(self.high_score)}")
+
+    def show_game_over(self):
+        self.draw_text(50, 310, "GAME OVER", pygame.font.Font('freesansbold.ttf', 100))
+
+    def save_high_score(self):
+        if self.score > self.high_score:
+            self.high_score = self.score
+            with open("high_score.txt", "w") as high_score_file:
+                high_score_file.write(str(self.high_score))
+
+    def update_snake(self):
+        snake_head = self.snake.body[0] + self.snake.direction
+        self.snake.add_block()
+
+        # Fruit eating and tail popping
+        if snake_head == game.fruit.pos:
+            game.score += 1
+            game.save_high_score()
+            game.fruit.random_pos()
+        else:
+            game.snake.body.pop()
+
+    def update_state(self):
+        snake_head = self.snake.head()
+        snake_body = self.snake.body
+
+        if snake_head in snake_body or snake_head.x < 0 or snake_head.x > (COLS - 1) or snake_head.y < 0 or \
+                snake_head.y > (ROWS - 1):
+            self.state = "game_over"
+            self.save_high_score()
 
 
-fruit = {
-    "pos": random_fruit_pos()
-}
-
-
-def draw_fruit():
-    x = fruit["pos"][0] * CELL_SIZE
-    y = fruit["pos"][1] * CELL_SIZE
-    rect = pygame.Rect(x, y, CELL_SIZE, CELL_SIZE)
-    pygame.draw.rect(screen, (255, 0, 0), rect)
-
-
-# Game Loop
+# Game
+game = Game()
 running = True
-game_over = False
 while running:
     # Ensure 15 FPS
     pygame.time.Clock().tick(15)
@@ -114,55 +125,39 @@ while running:
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
-            save_high_score()
+            game.save_high_score()
             running = False
 
         # Arrow movement
         if event.type == pygame.KEYDOWN and not changed_direction:
-            if event.key == pygame.K_LEFT and snake["direction"] != (1, 0):
-                snake["direction"] = (-1, 0)
+            if event.key == pygame.K_LEFT and game.snake.direction.x != 1:
+                game.snake.direction = Vector2(-1, 0)
                 print("direction left")
                 changed_direction = True
-            elif event.key == pygame.K_RIGHT and snake["direction"] != (-1, 0):
-                snake["direction"] = (1, 0)
+            elif event.key == pygame.K_RIGHT and game.snake.direction.x != -1:
+                game.snake.direction = Vector2(1, 0)
                 print("direction right")
                 changed_direction = True
-            elif event.key == pygame.K_UP and snake["direction"] != (0, 1):
-                snake["direction"] = (0, -1)
+            elif event.key == pygame.K_UP and game.snake.direction.y != 1:
+                game.snake.direction = Vector2(0, -1)
                 print("direction up")
                 changed_direction = True
-            elif event.key == pygame.K_DOWN and snake["direction"] != (0, -1):
-                snake["direction"] = (0, 1)
+            elif event.key == pygame.K_DOWN and game.snake.direction.y != -1:
+                game.snake.direction = Vector2(0, 1)
                 print("direction down")
                 changed_direction = True
 
-    if not game_over:
-        # Simulate movement of snake
-        snake_head = (snake["body"][0][0] + snake["direction"][0], snake["body"][0][1] + snake["direction"][1])
-        snake["body"].insert(0, snake_head)
+    if game.state == "running":
+        game.update_snake()
 
-        # Fruit eating and tail popping
-        if snake_head == fruit["pos"]:
-            score_value += 1
-            high_score_value = score_value if score_value > high_score_value else high_score_value
-            fruit["pos"] = random_fruit_pos()
-        else:
-            snake["body"].pop()
+        game.update_state()
 
-        # Game Over
-        snake_body_no_head = snake["body"].copy()
-        snake_body_no_head.remove(snake_head)
-        if snake_head in snake_body_no_head or snake_head[0] <= 0 or snake_head[0] >= (COLS - 1) or snake_head[1] <= 0 or \
-                snake_head[1] >= (ROWS - 1):
-            game_over = True
-            save_high_score()
+    game.snake.draw()
+    game.fruit.draw()
 
-    draw_snake()
-    draw_fruit()
+    if game.state == "game_over":
+        game.show_game_over()
 
-    if game_over:
-        show_game_over()
-
-    show_score(score_x, score_y)
-    show_high_score(high_score_x, high_score_y)
+    game.show_score()
+    game.show_high_score()
     pygame.display.update()
