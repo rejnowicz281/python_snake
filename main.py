@@ -33,10 +33,10 @@ class Snake:
             pygame.draw.rect(screen, (0, 255, 0), rect)
 
     def head(self):
-        return self.body[0] + self.direction
+        return self.body[0]
 
-    def add_block(self):
-        self.body.insert(0, Vector2(self.head()))
+    def add_head(self):
+        self.body.insert(0, Vector2(self.head() + self.direction))
 
 
 class Fruit:
@@ -61,6 +61,8 @@ class Game:
         self.state = "running"
         self.snake = Snake()
         self.fruit = Fruit()
+        while self.fruit.pos in self.snake.body:
+            self.fruit.random_pos()
         self.score = 0
         self.high_score = 0
         self.load_high_score()
@@ -92,11 +94,10 @@ class Game:
                 high_score_file.write(str(self.high_score))
 
     def update_snake(self):
-        snake_head = self.snake.body[0] + self.snake.direction
-        self.snake.add_block()
+        self.snake.add_head()
 
         # Fruit eating and tail popping
-        if snake_head == self.fruit.pos:
+        if self.snake.head() == self.fruit.pos:
             self.score += 1
             self.save_high_score()
             self.fruit.random_pos()
@@ -107,10 +108,14 @@ class Game:
 
     def update_state(self):
         snake_head = self.snake.head()
-        snake_body = self.snake.body
+        snake_head_to_be = self.snake.head() + self.snake.direction
+        snake_body = self.snake.body[1:]
 
-        if snake_head in snake_body or snake_head.x < 0 or snake_head.x > (COLS - 1) or snake_head.y < 0 or \
-                snake_head.y > (ROWS - 1):
+        if snake_head in snake_body \
+                or snake_head_to_be.x < 0 \
+                or snake_head_to_be.x > (COLS - 1) \
+                or snake_head_to_be.y < 0 \
+                or snake_head_to_be.y > (ROWS - 1):
             self.state = "game_over"
             self.save_high_score()
 
@@ -142,16 +147,14 @@ while running:
         game.snake.direction = Vector2(0, 1)
 
     if game.state == "running":
-        game.update_snake()
-
         game.update_state()
+        if game.state == "running":  # If game is over, don't bother updating the snake
+            game.update_snake()
 
     game.snake.draw()
     game.fruit.draw()
-
-    if game.state == "game_over":
-        game.show_game_over()
-
     game.show_score()
     game.show_high_score()
+    if game.state == "game_over":
+        game.show_game_over()
     pygame.display.update()
