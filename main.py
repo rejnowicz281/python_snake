@@ -122,9 +122,6 @@ while running:
     # Ensure 15 FPS
     pygame.time.Clock().tick(15)
 
-    # Ensure that player can't change two directions at a time
-    changed_direction = False
-
     # Background
     screen.fill((0, 0, 0))
 
@@ -133,24 +130,16 @@ while running:
             game.save_high_score()
             running = False
 
-        # Arrow movement
-        if event.type == pygame.KEYDOWN and not changed_direction:
-            if event.key == pygame.K_LEFT and game.snake.direction.x != 1:
-                game.snake.direction = Vector2(-1, 0)
-                print("direction left")
-                changed_direction = True
-            elif event.key == pygame.K_RIGHT and game.snake.direction.x != -1:
-                game.snake.direction = Vector2(1, 0)
-                print("direction right")
-                changed_direction = True
-            elif event.key == pygame.K_UP and game.snake.direction.y != 1:
-                game.snake.direction = Vector2(0, -1)
-                print("direction up")
-                changed_direction = True
-            elif event.key == pygame.K_DOWN and game.snake.direction.y != -1:
-                game.snake.direction = Vector2(0, 1)
-                print("direction down")
-                changed_direction = True
+    keys = pygame.key.get_pressed()
+
+    if keys[pygame.K_LEFT] and game.snake.direction.x != 1:
+        game.snake.direction = Vector2(-1, 0)
+    elif keys[pygame.K_RIGHT] and game.snake.direction.x != -1:
+        game.snake.direction = Vector2(1, 0)
+    elif keys[pygame.K_UP] and game.snake.direction.y != 1:
+        game.snake.direction = Vector2(0, -1)
+    elif keys[pygame.K_DOWN] and game.snake.direction.y != -1:
+        game.snake.direction = Vector2(0, 1)
 
     if game.state == "running":
         game.update_snake()
