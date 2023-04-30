@@ -66,8 +66,11 @@ class Game:
         self.load_high_score()
 
     def load_high_score(self):
-        with open("high_score.txt", "r") as high_score_file:
-            self.high_score = int(high_score_file.read())
+        try:
+            with open("high_score.txt", "r") as high_score_file:
+                self.high_score = int(high_score_file.read())
+        except FileNotFoundError:
+            self.high_score = 0
 
     def draw_text(self, x, y, text, font=pygame.font.Font('freesansbold.ttf', 32)):
         content = font.render(text, True, (255, 255, 255))
