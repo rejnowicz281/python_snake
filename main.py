@@ -51,11 +51,74 @@ class Snake:
         self.direction = Vector2(-1, 0)
 
     def draw(self):
-        for cell in self.body:
+        body_bottomleft = pygame.image.load("graphics/snake/body_bottomleft.png")
+        body_bottomright = pygame.image.load("graphics/snake/body_bottomright.png")
+        body_horizontal = pygame.image.load("graphics/snake/body_horizontal.png")
+        body_vertical = pygame.image.load("graphics/snake/body_vertical.png")
+        body_topleft = pygame.image.load("graphics/snake/body_topleft.png")
+        body_topright = pygame.image.load("graphics/snake/body_topright.png")
+
+        head_down = pygame.image.load("graphics/snake/head_down.png")
+        head_up = pygame.image.load("graphics/snake/head_up.png")
+        head_left = pygame.image.load("graphics/snake/head_left.png")
+        head_right = pygame.image.load("graphics/snake/head_right.png")
+
+        tail_down = pygame.image.load("graphics/snake/tail_down.png")
+        tail_left = pygame.image.load("graphics/snake/tail_left.png")
+        tail_right = pygame.image.load("graphics/snake/tail_right.png")
+        tail_up = pygame.image.load("graphics/snake/tail_up.png")
+
+        for index, cell in enumerate(self.body):
             x = cell.x * CELL_SIZE
             y = cell.y * CELL_SIZE
-            rect = pygame.Rect(x, y, CELL_SIZE, CELL_SIZE)
-            pygame.draw.rect(screen, (0, 255, 0), rect)
+
+            previous_cell_distance = cell - self.body[index - 1]
+
+            if index == 0:  # Head image selection
+                next_cell_distance = cell - self.body[index + 1]
+                if next_cell_distance == Vector2(1, 0):
+                    image = head_right
+                elif next_cell_distance == Vector2(-1, 0):
+                    image = head_left
+                elif next_cell_distance == Vector2(0, -1):
+                    image = head_up
+                elif next_cell_distance == Vector2(0, 1):
+                    image = head_down
+            elif index == len(self.body) - 1:  # Tail image selection
+                if previous_cell_distance == Vector2(-1, 0):
+                    image = tail_left
+                elif previous_cell_distance == Vector2(1, 0):
+                    image = tail_right
+                elif previous_cell_distance == Vector2(0, 1):
+                    image = tail_down
+                elif previous_cell_distance == Vector2(0, -1):
+                    image = tail_up
+            else:  # Body image selection
+                next_cell_distance = cell - self.body[index + 1]
+
+                if next_cell_distance == Vector2(1, 0) and previous_cell_distance == Vector2(0, -1) \
+                        or next_cell_distance == Vector2(0, -1) and previous_cell_distance == Vector2(1, 0):
+                    image = body_bottomleft
+
+                elif next_cell_distance == Vector2(-1, 0) and previous_cell_distance == Vector2(0, -1) \
+                        or next_cell_distance == Vector2(0, -1) and previous_cell_distance == Vector2(-1, 0):
+                    image = body_bottomright
+
+                elif next_cell_distance == Vector2(1, 0) and previous_cell_distance == Vector2(0, 1) \
+                        or next_cell_distance == Vector2(0, 1) and previous_cell_distance == Vector2(1, 0):
+                    image = body_topleft
+
+                elif next_cell_distance == Vector2(0, 1) and previous_cell_distance == Vector2(-1, 0) \
+                        or next_cell_distance == Vector2(-1, 0) and previous_cell_distance == Vector2(0, 1):
+                    image = body_topright
+
+                elif previous_cell_distance == Vector2(-1, 0) or previous_cell_distance == Vector2(1, 0):
+                    image = body_horizontal
+
+                elif previous_cell_distance == Vector2(0, -1) or previous_cell_distance == Vector2(0, 1):
+                    image = body_vertical
+
+            screen.blit(image, (x, y))
 
     def input(self):
         keys = pygame.key.get_pressed()
