@@ -157,11 +157,35 @@ class Fruit:
         screen.blit(apple, (x, y))
 
 
+class Explosion(pygame.sprite.Sprite):
+    def __init__(self, x=0, y=0, scale=4):
+        super().__init__()
+        self.scale = scale
+        self.sprites = self.get_sprites()
+        self.anim_index = 0
+        self.image = self.sprites[self.anim_index]
+        self.rect = self.image.get_rect(center=(x, y))
+
+    def get_sprites(self):
+        sheet = Spritesheet("graphics/explosion.png")
+        return [sheet.get_sprite(0, 0, 16, 16, self.scale), sheet.get_sprite(0, 1, 16, 16, self.scale),
+                sheet.get_sprite(0, 2, 16, 16, self.scale),
+                sheet.get_sprite(0, 3, 16, 16, self.scale), sheet.get_sprite(0, 4, 16, 16, self.scale)]
+
+    def update(self):
+        self.anim_index += 0.4
+        if self.anim_index >= len(self.sprites):
+            self.kill()
+        else:
+            self.image = self.sprites[int(self.anim_index)]
+
+
 class Game:
     def __init__(self):
         self.paused = False
         self.snake = Snake()
         self.fruit = self.get_fruit()
+        self.explosions = pygame.sprite.Group()
         self.score = 0
         self.high_score = self.get_high_score()
 
@@ -186,9 +210,9 @@ class Game:
     def show_high_score(self):
         draw_text(10, 10, f"High Score: {str(self.high_score)}")
 
-    @staticmethod
-    def show_game_over():
+    def show_game_over(self):
         draw_text(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, "GAME OVER", True, pygame.font.Font('freesansbold.ttf', 100))
+        draw_text(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 + 70, f"Your score was: {self.score}", True)
 
     def save_high_score(self):
         if self.score > self.high_score:
@@ -220,22 +244,26 @@ class Game:
             or snake_head_to_be.y > (ROWS - 1)
 
     def update(self):
+        draw_background()
+
         if not game.paused:
             game.snake.input()
             if self.snake_collision_check():
                 self.paused = True
                 self.save_high_score()
+                self.explosions.add(Explosion(self.snake.head().x * CELL_SIZE, self.snake.head().y * CELL_SIZE, 10))
             else:
                 self.move_snake()
+                self.snake.draw()
+                self.fruit.draw()
+                self.show_score()
+                self.show_high_score()
 
-        draw_background()
-        game.snake.draw()
-        game.fruit.draw()
-        game.show_score()
-        game.show_high_score()
+        self.explosions.update()
+        self.explosions.draw(screen)
 
         if game.paused:
-            game.show_game_over()
+            self.show_game_over()
 
 
 # Game
